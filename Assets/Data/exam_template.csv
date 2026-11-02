@@ -1,0 +1,2 @@
+id,origin,examLabel,concept,difficulty,question,choice1,choice2,choice3,choice4,answer,explanation,fieldNote
+sample.001,PastExam,2024년 1회 (예시 - 실제 문항으로 교체),LadderSelfHold,1,"예시 문항: 푸시버튼에서 손을 떼어도 출력이 유지되도록 출력 접점을 병렬로 연결하는 회로는?",자기유지 회로,인터록 회로,온 딜레이 회로,일치 회로,1,"출력 접점을 START 접점에 병렬로 넣으면 출력이 스스로 유지된다.","START에서 손을 뗐는데도 돌았지? 그게 자기유지야."

@@ -1,0 +1,109 @@
+name: Build WebGL and deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:          # Actions 탭에서 [Run workflow] 버튼으로 수동 실행
+
+# 같은 브랜치에서 빌드가 겹치면 이전 것을 취소한다 (20~40분짜리 작업이 쌓이지 않게)
+concurrency:
+  group: build-webgl
+  cancel-in-progress: true
+
+permissions:
+  contents: write             # gh-pages 브랜치에 올리려면 필요
+
+env:
+  BUILD_DIR: build/WebGL/Game # unity-builder 출력: build/<플랫폼>/<buildName>
+
+jobs:
+  build-and-deploy:
+    name: WebGL build + Pages deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      # 0) 시크릿이 비어 있으면 Unity가 돌기 전에 쉬운 말로 알려 준다
+      - name: Check Unity secrets
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          missing=0
+          for name in UNITY_LICENSE UNITY_EMAIL UNITY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Repository secret ${name} is empty. Settings > Secrets and variables > Actions 에서 등록하세요."
+              missing=1
+            fi
+          done
+          exit $missing
+
+      # 1) 디스크 확보: Unity 이미지가 크다 (No space left on device 방지)
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+          docker-images: false
+          swap-storage: true
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2) Library 캐시: 두 번째 빌드부터 훨씬 빨라진다 (첫 빌드 ~30분 -> 이후 10~15분)
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-WebGL-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-WebGL-
+
+      # 3) 빌드: CiBuild.BuildWebGL이 씬 생성 + WebGL 설정 + 빌드를 모두 한다
+      - name: Build WebGL (GameCI)
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: WebGL
+          unityVersion: auto                       # ProjectSettings/ProjectVersion.txt 에서 읽는다
+          buildMethod: AutoSurvival.EditorTools.CiBuild.BuildWebGL
+          buildsPath: build
+          buildName: Game
+          versioning: None
+          allowDirtyBuild: true
+
+      # 4) 결과 확인 + GitHub Pages 준비
+      - name: Verify build output
+        run: |
+          ls -la "$BUILD_DIR"
+          test -f "$BUILD_DIR/index.html" || { echo "::error::index.html not found. 빌드가 WebGL 결과물을 만들지 못했습니다."; exit 1; }
+          touch "$BUILD_DIR/.nojekyll"
+          du -sh "$BUILD_DIR"
+          find "$BUILD_DIR" -type f -size +95M -print | while read f; do echo "::warning::$f 가 95MB를 넘습니다 (GitHub Pages 한도 100MB). 가이드의 '파일이 너무 클 때'를 보세요."; done
+
+      # 5) gh-pages 브랜치로 배포 (매번 새 기록으로 덮어써서 저장소가 커지지 않게 force_orphan)
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ env.BUILD_DIR }}
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: "Deploy WebGL build ${{ github.sha }}"
+
+      # 6) 빌드 결과를 7일간 내려받을 수 있게 보관 (배포가 이상할 때 확인용)
+      - name: Upload build artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webgl-build
+          path: ${{ env.BUILD_DIR }}
+          retention-days: 7
+          if-no-files-found: ignore

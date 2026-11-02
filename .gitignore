@@ -1,0 +1,26 @@
+# Unity가 만드는 폴더 (올리지 않는다)
+/Library/
+/Temp/
+/Obj/
+/Logs/
+/UserSettings/
+/MemoryCaptures/
+/Build/
+/Builds/
+/build/
+
+# IDE
+*.csproj
+*.sln
+*.suo
+*.user
+.vs/
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 압축 파일은 올리지 않는다 (Kenney zip 등)
+*.zip

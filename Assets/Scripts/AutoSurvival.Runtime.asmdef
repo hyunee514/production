@@ -1,0 +1,9 @@
+{
+    "name": "AutoSurvival.Runtime",
+    "rootNamespace": "AutoSurvival",
+    "references": ["UnityEngine.UI"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "autoReferenced": true
+}
