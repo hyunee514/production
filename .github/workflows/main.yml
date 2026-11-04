@@ -85,6 +85,7 @@ jobs:
       # 4) 결과 확인 + GitHub Pages 준비
       - name: Verify build output
         run: |
+          sudo chown -R "$(id -u):$(id -g)" build
           ls -la "$BUILD_DIR"
           test -f "$BUILD_DIR/index.html" || { echo "::error::index.html not found. 빌드가 WebGL 결과물을 만들지 못했습니다."; exit 1; }
           touch "$BUILD_DIR/.nojekyll"
