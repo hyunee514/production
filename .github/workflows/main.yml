@@ -54,6 +54,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Remove EditMode tests from the CI build
+        run: rm -rf Assets/Tests Assets/Tests.meta
+
       # 2) Library 캐시: 두 번째 빌드부터 훨씬 빨라진다 (첫 빌드 ~30분 -> 이후 10~15분)
       - name: Cache Library
         uses: actions/cache@v4
