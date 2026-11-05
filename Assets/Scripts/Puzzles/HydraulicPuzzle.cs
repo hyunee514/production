@@ -165,7 +165,7 @@ namespace AutoSurvival.Puzzles
             if (IsRunning && CurrentPhase == Phase.Pumping && !UseExternalRhythm)
             {
                 _beatClock += Time.deltaTime;
-                if (Input.GetKeyDown(pumpKey)) PumpStroke();
+                if (GameInput.KeyDown(pumpKey)) PumpStroke();
             }
             base.Update();
         }

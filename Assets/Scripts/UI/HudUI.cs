@@ -67,8 +67,8 @@ namespace AutoSurvival.UI
 
             if (saveSlots != null)
             {
-                if (Input.GetKeyDown(saveKey)) saveSlots.Open(SlotMode.Save);
-                else if (Input.GetKeyDown(loadKey)) saveSlots.Open(SlotMode.Load);
+                if (GameInput.KeyDown(saveKey)) saveSlots.Open(SlotMode.Save);
+                else if (GameInput.KeyDown(loadKey)) saveSlots.Open(SlotMode.Load);
             }
         }
 

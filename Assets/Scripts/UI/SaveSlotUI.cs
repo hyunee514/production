@@ -79,8 +79,7 @@ namespace AutoSurvival.UI
         {
             Bind(GameManager.Instance);
             IsOpen = true;
-            Cursor.lockState = CursorLockMode.None;      // 메뉴가 열려 있는 동안 마우스를 푼다 (이동 컨트롤러도 멈춤)
-            Cursor.visible = true;
+            GameInput.BlockMovement(this, true);      // 메뉴가 열려 있는 동안 이동·시점을 멈춘다
             if (root != null) root.SetActive(true);
             Mode = mode;
             Disarm();
@@ -93,8 +92,7 @@ namespace AutoSurvival.UI
             IsOpen = false;
             Disarm();
             if (root != null) root.SetActive(false);
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            GameInput.BlockMovement(this, false);
         }
 
         public void SetMode(SlotMode mode)

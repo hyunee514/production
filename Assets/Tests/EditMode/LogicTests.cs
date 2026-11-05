@@ -1768,5 +1768,16 @@ namespace AutoSurvival.Tests
             Assert.That(text, Does.Contain("3분 전"));
             Assert.That(MainMenuModel.DescribeLatest(Slot(0, true, false, "2026-11-01T09:00:00Z", backup: true), null, System.DateTime.UtcNow), Does.Contain("복구본"));
         }
+    
+        [Test]
+        public void ThirdPerson_CameraRelativeMove_And_TargetPick()
+        {
+            var f = AutoSurvival.Interaction.ThirdPersonMath.CameraRelative(90f, new Vector2(0f, 1f));
+            Assert.That(f.x, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(AutoSurvival.Interaction.ThirdPersonMath.TurnToward(350f, 10f, 5f), Is.EqualTo(355f).Within(1e-3f));
+            var cands = new List<Vector3> { new Vector3(0, 0, -1), new Vector3(0, 0, 1.5f) };
+            Assert.AreEqual(1, AutoSurvival.Interaction.ThirdPersonMath.PickTarget(Vector3.zero, Vector3.forward, cands, 2.8f));
+            Assert.AreEqual(-1, AutoSurvival.Interaction.ThirdPersonMath.PickTarget(Vector3.zero, Vector3.forward, new List<Vector3> { new Vector3(0, 0, 5) }, 2.8f));
+        }
     }
 }

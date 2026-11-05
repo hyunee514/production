@@ -74,7 +74,7 @@ namespace AutoSurvival.UI
         private void Update()
         {
             if (_mgr == null) { TryBind(); if (_mgr != null) Rebuild(); }
-            if (Input.GetKeyDown(collapseKey) && !IsTyping()) { _collapsed = !_collapsed; Rebuild(); }
+            if (GameInput.KeyDown(collapseKey) && !IsTyping()) { _collapsed = !_collapsed; Rebuild(); }
 
             if (_allDoneTimer >= 0f)
             {

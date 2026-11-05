@@ -86,8 +86,7 @@ namespace AutoSurvival.UI
         {
             Bind(GameManager.Instance);
             IsOpen = true;
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            GameInput.BlockMovement(this, true);
             if (root != null) root.SetActive(true);
             SetMessage("");
 
@@ -105,8 +104,7 @@ namespace AutoSurvival.UI
         {
             IsOpen = false;
             if (root != null) root.SetActive(false);
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            GameInput.BlockMovement(this, false);
         }
 
         public void Toggle() { if (IsOpen) Close(); else Open(); }
@@ -251,7 +249,7 @@ namespace AutoSurvival.UI
 
         private void Update()
         {
-            if (Input.GetKeyDown(toggleKey)) Toggle();
+            if (GameInput.KeyDown(toggleKey)) Toggle();
             if (IsOpen && Time.unscaledTime >= _nextPoll) Refresh();   // 식량·물·숙련도가 바뀌면 판정도 바뀐다
         }
     }

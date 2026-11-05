@@ -71,6 +71,13 @@ namespace AutoSurvival.EditorTools
             PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.ExplicitlyThrownExceptionsOnly;
             PlayerSettings.WebGL.dataCaching = true;
 
+            // 모바일 브라우저: 경고 배너 없는 Minimal 템플릿, 가볍게 그리기
+            PlayerSettings.WebGL.template = "APPLICATION:Minimal";
+            QualitySettings.antiAliasing = 0;
+            QualitySettings.shadowDistance = 45f;
+            QualitySettings.pixelLightCount = 2;
+            QualitySettings.shadowResolution = ShadowResolution.Medium;
+
             // JsonUtility로 저장하는 클래스가 코드 스트리핑으로 지워지지 않도록 보수적으로
             PlayerSettings.SetManagedStrippingLevel(NamedBuildTarget.WebGL, ManagedStrippingLevel.Low);
         }

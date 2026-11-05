@@ -113,7 +113,7 @@ namespace AutoSurvival.UI
         private void Update()
         {
             ApplySettings();
-            if (Input.GetKeyDown(skipKey)) Skip();
+            if (GameInput.KeyDown(skipKey)) Skip();
 
             var before = Player.Current;
             Player.Tick(Time.unscaledDeltaTime);

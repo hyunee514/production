@@ -8,7 +8,7 @@ namespace AutoSurvival.Feedback
     ///
     /// 설치: Player > Head(마우스 상하 회전) > ShakePivot(이 스크립트) > Main Camera
     ///  - ShakePivot에는 다른 스크립트가 회전을 쓰지 않는다. 그래서 localPosition/localRotation을 "절대값"으로 덮어써도
-    ///    SimpleFirstPersonController의 시점 회전과 충돌하지 않는다 (흔들림이 끝나면 정확히 0으로 돌아온다).
+    ///    ThirdPersonCamera의 궤도 회전과 충돌하지 않는다 (흔들림이 끝나면 정확히 0으로 돌아온다).
     ///  - UI는 Canvas라서 이 흔들림의 영향을 받지 않는다 (의도된 동작: UI는 고정, 3D 카메라만 흔든다).
     ///  - 일시정지(Time.timeScale = 0)나 히트스톱 중에도 흔들림이 부드럽게 끝나도록 unscaledDeltaTime을 쓴다.
     /// </summary>

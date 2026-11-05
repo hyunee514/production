@@ -210,9 +210,9 @@ namespace AutoSurvival.UI
             if (allowNumberKeys && !Answered)
             {
                 for (int i = 0; i < 4; i++)
-                    if (Input.GetKeyDown(KeyCode.Alpha1 + i)) { Choose(i); break; }
+                    if (GameInput.KeyDown(KeyCode.Alpha1 + i)) { Choose(i); break; }
             }
-            if (Answered && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))) Close();
+            if (Answered && (GameInput.KeyDown(KeyCode.Return) || GameInput.KeyDown(KeyCode.KeypadEnter))) Close();
         }
 
         // ───────── 도우미 ─────────

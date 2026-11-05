@@ -34,7 +34,7 @@ namespace AutoSurvival.EditorTools
     ///  - 배치 숫자는 Level/IslandLayouts.cs 한 곳에 있다 (레벨 디자인 문서와 같은 표).
     /// 이 파일은 Unity 없이 컴파일해 보지 못했다. 처음 실행할 때 콘솔 오류가 있으면 알려 달라.
     /// </summary>
-    public static class ProjectSetupTool
+    public static partial class ProjectSetupTool
     {
         private const string MenuRoot = "AutoSurvival/프로젝트 기본 세팅/";
         private const string ScenesDir = "Assets/Scenes";
@@ -321,95 +321,13 @@ namespace AutoSurvival.EditorTools
             var machines = BuildMachines(layout, assets);
             BuildResourceZones(layout);
             BuildLandmarks(layout);
+            ScatterDecor(layout);
             if (layout.shortName == "core") AddMachineLights(machines);
 
             BuildMasterCanvas(companion, machines);
 
             EditorSceneManager.SaveScene(scene, path);
             Info($"{layout.sceneName}: 생성 완료 (기계 {machines.Length}대: {string.Join(", ", machines.Select(m => m.MachineId))})");
-        }
-
-        private static void BuildGround(IslandLayout l)
-        {
-            Color groundColor = l.shortName == "landing" ? new Color(0.86f, 0.80f, 0.60f)
-                              : l.shortName == "foundry" ? new Color(0.32f, 0.30f, 0.30f)
-                              : new Color(0.20f, 0.20f, 0.24f);
-
-            var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            ground.name = "Ground";
-            ground.transform.localScale = new Vector3(l.halfX * 2f / 10f, 1f, l.halfZ * 2f / 10f);
-            Tint(ground, groundColor);
-
-            if (l.shortName == "landing")
-            {
-                var sea = GameObject.CreatePrimitive(PrimitiveType.Plane);
-                sea.name = "Sea";
-                sea.transform.position = new Vector3(0f, -0.35f, 0f);
-                sea.transform.localScale = new Vector3(40f, 1f, 40f);
-                Tint(sea, new Color(0.15f, 0.45f, 0.75f));
-                Object.DestroyImmediate(sea.GetComponent<Collider>());      // 바다는 보이기만 한다 (낙사 방지 벽은 나중에)
-            }
-        }
-
-        private static void ApplyAtmosphere(IslandLayout l)
-        {
-            var light = Object.FindObjectOfType<Light>();
-            if (l.shortName == "foundry")
-            {
-                RenderSettings.ambientLight = new Color(0.30f, 0.27f, 0.25f);
-                if (light != null) { light.color = new Color(1f, 0.78f, 0.55f); light.intensity = 0.9f; }
-            }
-            else if (l.shortName == "core")
-            {
-                RenderSettings.ambientLight = new Color(0.12f, 0.12f, 0.16f);
-                if (light != null) { light.color = new Color(0.6f, 0.7f, 1f); light.intensity = 0.25f; }
-            }
-        }
-
-        private static void BuildPlayer(IslandLayout l)
-        {
-            var player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            player.name = "Player";
-            player.tag = "Player";
-            Object.DestroyImmediate(player.GetComponent<CapsuleCollider>());
-            player.GetComponent<MeshRenderer>().enabled = false;           // 1인칭이라 몸은 보이지 않게
-
-            var cc = player.AddComponent<CharacterController>();
-            cc.height = 2f; cc.radius = 0.4f; cc.center = new Vector3(0f, 1f, 0f);
-
-            player.AddComponent<SurvivalStats>();
-            player.AddComponent<Inventory>();
-            var interactor = player.AddComponent<PlayerInteractor>();
-            var controller = player.AddComponent<SimpleFirstPersonController>();
-
-            // 기본 카메라를 플레이어 머리 높이로 옮긴다
-            var cam = Camera.main != null ? Camera.main : Object.FindObjectOfType<Camera>();
-            if (cam == null) { var camGo = new GameObject("Main Camera", typeof(Camera)); camGo.tag = "MainCamera"; cam = camGo.GetComponent<Camera>(); }
-            // 계층: Player > Head(마우스 상하 회전) > ShakePivot(CameraShaker, 흔들림 전용) > Camera
-            // 흔들림과 시점 회전이 서로 다른 Transform을 쓰므로 충돌하지 않는다.
-            var head = new GameObject("Head").transform;
-            head.SetParent(player.transform, false);
-            head.localPosition = new Vector3(0f, 1.6f, 0f);
-            var shakePivot = new GameObject("ShakePivot");
-            shakePivot.transform.SetParent(head, false);
-            shakePivot.AddComponent<CameraShaker>();
-            cam.transform.SetParent(shakePivot.transform, false);
-            cam.transform.localPosition = Vector3.zero;
-            cam.transform.localRotation = Quaternion.identity;
-
-            var controllerSo = new SerializedObject(controller);
-            SetRef(controllerSo, "cameraPivot", head);
-            controllerSo.ApplyModifiedPropertiesWithoutUndo();
-
-            var interactorSo = new SerializedObject(interactor);
-            SetRef(interactorSo, "playerCamera", cam);
-            SetRef(interactorSo, "movementController", controller);
-            interactorSo.ApplyModifiedPropertiesWithoutUndo();
-
-            // 스폰: 베이스캠프를 등지고 첫 기계 쪽을 본다
-            player.transform.position = new Vector3(l.spawnX, 0.05f, l.spawnZ);
-            var look = l.machines.Count > 0 ? new Vector3(l.machines[0].x, 0f, l.machines[0].z) : new Vector3(l.campX, 0f, l.campZ + 10f);
-            player.transform.rotation = Quaternion.LookRotation(new Vector3(look.x - l.spawnX, 0f, look.z - l.spawnZ), Vector3.up);
         }
 
         private static void BuildBasecamp(IslandLayout l)
@@ -720,6 +638,14 @@ namespace AutoSurvival.EditorTools
             if (Object.FindObjectOfType<EventSystem>() == null)
                 new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
 
+            // 모바일 터치 컨트롤 (PC에서는 숨겨지고, 모바일/터치가 감지되면 나타난다)
+            foreach (var old in Object.FindObjectsOfType<TouchControlsUI>()) Object.DestroyImmediate(old.gameObject);
+            var touchGo = new GameObject("TouchControls");
+            var touch = touchGo.AddComponent<TouchControlsUI>();
+            var touchSo = new SerializedObject(touch);
+            SetRef(touchSo, "font", GetFont());
+            touchSo.ApplyModifiedPropertiesWithoutUndo();
+
             if (!_fontIsKorean)
                 Warn("한글을 표시할 글꼴(Noto Sans KR, Nanum 등)을 프로젝트에서 찾지 못해 기본 글꼴을 썼습니다. 한글이 □로 보이면 MasterCanvas의 모든 Text에 한글 글꼴을 지정하세요.");
             return canvasGo;
@@ -738,7 +664,7 @@ namespace AutoSurvival.EditorTools
             Place(toast.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -90f), new Vector2(1000f, 50f));
             var stats = Label("StatsText", root, "", 24, TextAnchor.UpperLeft, Color.white);
             Place(stats.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(30f, -30f), new Vector2(900f, 80f));
-            var hint = Label("KeyHintText", root, "M 섬 지도   J 목표   F10 설정   F5 저장   F9 불러오기   E 상호작용", 22, TextAnchor.LowerRight, new Color(1f, 1f, 1f, 0.6f));
+            var hint = Label("KeyHintText", root, "WASD 이동  Shift 달리기  Space 점프  E 상호작용  우클릭 드래그 시점  M 지도  J 목표  F10 설정  F5 저장", 22, TextAnchor.LowerRight, new Color(1f, 1f, 1f, 0.6f));
             Place(hint.rectTransform, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-30f, 20f), new Vector2(900f, 40f));
 
             var so = new SerializedObject(hud);
@@ -1483,6 +1409,8 @@ namespace AutoSurvival.EditorTools
             var mat = new Material(shader) { name = name };
             if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
             if (mat.HasProperty("_Color")) mat.SetColor("_Color", color);
+            if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", 0.12f);      // 매트한 장난감 느낌
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.12f);
             AssetDatabase.CreateAsset(mat, path);
             MaterialCache[color] = mat;
             return mat;

@@ -193,7 +193,7 @@ namespace AutoSurvival.UI
                 if (tickSource != null && tickClip != null) tickSource.PlayOneShot(tickClip);
             }
 
-            if (Input.GetKeyDown(puzzle.PumpKey)) Press();
+            if (GameInput.KeyDown(puzzle.PumpKey)) Press();
 
             UpdateNotes();
             UpdateFeedback();

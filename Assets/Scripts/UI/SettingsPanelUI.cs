@@ -60,7 +60,7 @@ namespace AutoSurvival.UI
             if (root != null) root.SetActive(true);
             if (Manager != null) { Manager.Changed -= HandleChanged; Manager.Changed += HandleChanged; }
             Show(SettingsManager.Current);
-            if (controlCursor) { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
+            if (controlCursor) GameInput.BlockMovement(this, true);
         }
 
         public void Close()
@@ -69,13 +69,13 @@ namespace AutoSurvival.UI
             IsOpen = false;
             Manager?.Flush();
             if (root != null) root.SetActive(false);
-            if (controlCursor) { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
+            if (controlCursor) GameInput.BlockMovement(this, false);
         }
 
         private void Update()
         {
-            if (IsOpen && Input.GetKeyDown(KeyCode.Escape)) { Close(); return; }
-            if (toggleKey != KeyCode.None && Input.GetKeyDown(toggleKey)) { if (IsOpen) Close(); else Open(); }
+            if (IsOpen && GameInput.KeyDown(KeyCode.Escape)) { Close(); return; }
+            if (toggleKey != KeyCode.None && GameInput.KeyDown(toggleKey)) { if (IsOpen) Close(); else Open(); }
         }
 
         private void Show(SettingsData d)

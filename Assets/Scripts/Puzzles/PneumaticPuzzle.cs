@@ -121,11 +121,11 @@ namespace AutoSurvival.Puzzles
             if (IsRunning && !Testing)
             {
                 if (Level.actuation == ValveActuation.SpringReturn)
-                    Live.Command(Input.GetKey(key14) ? PneuAction.Press14 : PneuAction.Release14);
+                    Live.Command(GameInput.Key(key14) ? PneuAction.Press14 : PneuAction.Release14);
                 else
                 {
-                    if (Input.GetKeyDown(key14)) Live.Command(PneuAction.Pulse14);
-                    if (Input.GetKeyDown(key12)) Live.Command(PneuAction.Pulse12);
+                    if (GameInput.KeyDown(key14)) Live.Command(PneuAction.Pulse14);
+                    if (GameInput.KeyDown(key12)) Live.Command(PneuAction.Pulse12);
                 }
 
                 // 호스 파열 상태에서는 라이브 가동 불가: 안전하게 정지

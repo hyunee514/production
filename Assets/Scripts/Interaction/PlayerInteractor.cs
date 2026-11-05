@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using AutoSurvival.Puzzles;
 using AutoSurvival.Survival;
@@ -34,12 +35,12 @@ namespace AutoSurvival.Interaction
         }
     }
 
-    /// <summary>화면 중앙 레이캐스트로 상호작용 대상을 찾고, 퍼즐 진입/종료 시 조작 모드를 전환한다.</summary>
+    /// <summary>주변(근접 반경) 상호작용 대상 중 바라보는 쪽에 가까운 것을 고르고, 퍼즐 진입/종료 시 조작 모드를 전환한다.</summary>
     [RequireComponent(typeof(SurvivalStats), typeof(Inventory))]
     public class PlayerInteractor : MonoBehaviour
     {
-        [SerializeField] private Camera playerCamera;
-        [SerializeField] private float reach = 3f;
+        [SerializeField] private Camera playerCamera;            // (3인칭에서는 선택 사항)
+        [SerializeField] private float reach = 2.8f;             // 근접 반경(m)
         [SerializeField] private KeyCode interactKey = KeyCode.E;
         [SerializeField] private MonoBehaviour movementController;   // 퍼즐 중 이동 잠금
 
@@ -69,21 +70,38 @@ namespace AutoSurvival.Interaction
             if (_currentPuzzle != null)
             {
                 // 퍼즐 중에도 월드는 흐른다. ESC로 중단 가능 (패널티 없이 포기).
-                if (Input.GetKeyDown(KeyCode.Escape)) _currentPuzzle.Abort();
+                if (GameInput.KeyDown(KeyCode.Escape)) _currentPuzzle.Abort();
                 return;
             }
 
             FindTarget();
-            if (_target != null && Input.GetKeyDown(interactKey) && _target.CanInteract(this))
+            if (_target != null && GameInput.KeyDown(interactKey) && !GameInput.MovementBlocked && _target.CanInteract(this))
+            {
+                (movementController as ThirdPersonController)?.PlayInteract();
                 _target.Interact(this);
+            }
         }
+
+        private readonly Collider[] _hits = new Collider[48];
+        private readonly List<IInteractable> _cands = new();
+        private readonly List<Vector3> _candPos = new();
 
         private void FindTarget()
         {
-            IInteractable found = null;
-            var ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
-            if (Physics.Raycast(ray, out var hit, reach))
-                found = hit.collider.GetComponentInParent<IInteractable>();
+            _cands.Clear(); _candPos.Clear();
+            var origin = transform.position;
+            int n = Physics.OverlapSphereNonAlloc(origin + Vector3.up * 0.9f, reach, _hits, ~0, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < n; i++)
+            {
+                var it = _hits[i].GetComponentInParent<IInteractable>();
+                if (it == null || _cands.Contains(it)) continue;
+                _cands.Add(it);
+                _candPos.Add(_hits[i].bounds.ClosestPoint(origin));
+            }
+
+            Vector3 facing = movementController is ThirdPersonController tp ? tp.Facing : transform.forward;
+            int idx = ThirdPersonMath.PickTarget(origin, facing, _candPos, reach);
+            var found = idx >= 0 ? _cands[idx] : null;
 
             if (!ReferenceEquals(found, _target))
             {
@@ -96,16 +114,12 @@ namespace AutoSurvival.Interaction
         {
             _currentPuzzle = puzzle;
             if (movementController != null) movementController.enabled = false;
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
         }
 
         public void ExitPuzzleMode()
         {
             _currentPuzzle = null;
             if (movementController != null) movementController.enabled = true;
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
         }
 
         public void ShowToast(string message) => OnToast?.Invoke(message);

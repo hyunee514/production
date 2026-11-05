@@ -200,7 +200,7 @@ namespace AutoSurvival.UI
                 && !_gate.IsArmed("new", Time.unscaledTime) && !_gate.IsArmed("quit", Time.unscaledTime)
                 && messageText.text.EndsWith("눌러 주세요.")) messageText.text = "";
 
-            if (Input.GetKeyDown(KeyCode.Escape) && settingsPanel == null) _gate.Cancel();
+            if (GameInput.KeyDown(KeyCode.Escape) && settingsPanel == null) _gate.Cancel();
         }
 
         private void LateUpdate()
